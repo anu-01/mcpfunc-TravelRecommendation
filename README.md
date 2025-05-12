@@ -42,31 +42,62 @@ Azure Functions is a serverless compute platform that allows you to run small pi
    cd mcpfunc-TravelRecommendation
    ```
 
-2. Install the Azure Functions Core Tools if not already installed:
+2. Install Python dependencies:
    ```bash
-   npm install -g azure-functions-core-tools@4 --unsafe-perm true
+   pip install -r requirements.txt
    ```
+   Note it is a best practice to create a Virtual Environment before doing the pip install to avoid dependency issues/collisions, or if you are running in CodeSpaces. See Python Environments in VS Code for more information.
 
-3. Log in to Azure:
+3. Deploy to Azure for Remote MCP
+
+   - Log in to Azure:
    ```bash
    az login
    ```
-
-4. Deploy the function:
+   - Deploy to function app resource you created earlier in Step 1
    ```bash
-   func azure functionapp publish <YourFunctionAppName>
+   az functionapp deployment source config-zip \  --resource-group <YourResourceGroup> \  --name <YourFunctionAppName> \  --src <path-to-your-zip-file>
    ```
 
-### Step 3: Test the Function
+### Step 3: Connect to your remote MCP server function app from a client
 
-Once deployed, you can test the function by sending HTTP requests to the function endpoint. Make sure to include the appropriate payload expected by the MCP handler.
+Your client will need a key in order to invoke the new hosted SSE endpoint, which will be of the form https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse. The hosted function requires a system key by default which can be obtained from the portal or the CLI (az functionapp keys list --resource-group <resource_group> --name <function_app_name>). Obtain the system key named mcp_extension.
 
+#### Connect to remote MCP server in MCP Inspector
+For MCP Inspector, you can include the key in the URL:
+```bash
+https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse?code=<your-mcp-extension-system-key>
+```
+
+#### Connect to remote MCP server in VS Code - GitHub Copilot
+For GitHub Copilot within VS Code, you should instead set the key as the x-functions-key header in mcp.json, and you would just use https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse for the URL. The following example uses an input and will prompt you to provide the key when you start the server from VS Code. Note mcp.json has already been included in this repo and will be picked up by VS Code. Click Start on the server to be prompted for values including functionapp-name (in your /.azure/*/.env file) and functions-mcp-extension-system-key which can be obtained from CLI command above or API Keys in the portal for the Function App.
+
+```json
+{
+    "inputs":[
+        {
+            "type": "promptString",
+            "id": "functions-mcp-extension-system-key",
+            "description": "Azure Functions Extension System Key",
+            "password": true
+        }
+    ],
+    "servers": {
+        "my-mcp-server-13c2eec6": {
+            "type": "sse",
+            "url": "https://mcpfunc.azurewebsites.net/runtime/webhooks/mcp/sse",
+            "headers": {
+                "x-functions-key": "${input:functions-mcp-extension-system-key}",
+            },
+        }
+    }
+}
+```
 ---
+
 
 ## Contributing
 
 Feel free to fork the repo and submit pull requests. For major changes, please open an issue first to discuss what you would like to change.
 
-## License
 
-This project is licensed under the MIT License.
