@@ -85,7 +85,7 @@ For GitHub Copilot within VS Code, you should instead set the key as the x-funct
     "servers": {
         "my-mcp-server-13c2eec6": {
             "type": "sse",
-            "url": "https://mcpfunc.azurewebsites.net/runtime/webhooks/mcp/sse",
+            "url": "https://<funcappname>.azurewebsites.net/runtime/webhooks/mcp/sse",
             "headers": {
                 "x-functions-key": "${input:functions-mcp-extension-system-key}",
             },
